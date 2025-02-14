@@ -27,7 +27,7 @@ public class CardDeliveryTest {
         options.addArguments("--no-sandbox");
         options.addArguments("--headless");
         Selenide.open("http://localhost:9999");
-        $("[data-test-id='date'] [placeholder='Дата встречи']").sendKeys(Keys.CONTROL, "a" + Keys.DELETE);
+        $("[data-test-id='date'] [placeholder='Дата встречи']").sendKeys(Keys.SHIFT,Keys.HOME, Keys.BACK_SPACE);
     }
 
     @Test
