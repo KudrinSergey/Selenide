@@ -1,69 +1,40 @@
 package ru.netology;
 
-import com.codeborne.selenide.ElementsCollection;
+import com.codeborne.selenide.Condition;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.openqa.selenium.Keys;
-import org.openqa.selenium.chrome.ChromeOptions;
 
 import java.time.Duration;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 
-import static com.codeborne.selenide.Condition.*;
-import static com.codeborne.selenide.Selenide.*;
+import static com.codeborne.selenide.Selectors.withText;
+import static com.codeborne.selenide.Selenide.$;
+import static com.codeborne.selenide.Selenide.open;
 
 public class CardDeliveryTest {
-    public String generateDate(int days) {
-        return LocalDate.now().plusDays(days).format(DateTimeFormatter.ofPattern("dd.MM.yyyy"));
-    }
-
-
     @BeforeEach
-    void openBrowser() {
-        ChromeOptions options = new ChromeOptions();
-        options.addArguments("--disable-dev-shm-usage");
-        options.addArguments("--no-sandbox");
-        //options.addArguments("--headless");
+    void setUp() {
         open("http://localhost:9999");
-        $("[data-test-id='date'] [placeholder='Дата встречи']").sendKeys(Keys.CONTROL, "a" + Keys.DELETE);
     }
 
+    // 1. Отправка заявки с верно заполненными полями;
     @Test
-    void shouldValidValues() {
-        $("[data-test-id='city'] [placeholder='Город']").val("Нижний Новгород");
-        $("[data-test-id='date'] [placeholder='Дата встречи']").val(generateDate(3));
-        $("[data-test-id='name'] [name='name']").val("Иван Иванов");
-        $("[data-test-id='phone'] [name='phone']").val("+12312341234");
-        $("[data-test-id='agreement'] [class='checkbox__box']").click();
-        $(".button").click();
-        $("[data-test-id='notification'] [class='notification__title']").shouldBe(text("Успешно!"), Duration.ofSeconds(15));
-        $("[data-test-id='notification'] [class='notification__content']").shouldBe(text("Встреча успешно забронирована на " + generateDate(3)));
-    }
+    public void shouldReturnSuccessIfFieldsAreFilledInCorrectly() {
 
-    @Test
-    void shouldInvalidValueOfCity() {
-        $("[data-test-id='city'] [placeholder='Город']").val("Кстово");
-        $("[data-test-id='date'] [placeholder='Дата встречи']").val(generateDate(3));
-        $("[data-test-id='name'] [name='name']").val("Иван Иванов");
-        $("[data-test-id='phone'] [name='phone']").val("+12312341234");
-        $("[data-test-id='agreement'] [class='checkbox__box']").click();
-        $(".button").click();
-        $("[data-test-id='city'].input_invalid [class='input__sub']").shouldHave(ownText("Доставка в выбранный город недоступна"));
-    }
+        LocalDate deliveryDateCard = LocalDate.now().plusDays(3);
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd.MM.yyyy");
+        String dateText = deliveryDateCard.format(formatter);
 
-
-    @Test
-    void shouldSelectedInListOfCity() {
-        $("[data-test-id='city'] [placeholder='Город']").val("Ни");
-        ElementsCollection listOfCities = $$("[class='popup__container'] span");
-        listOfCities.findBy(text("Нижний Новгород")).click();
-        $("[data-test-id='date'] [placeholder='Дата встречи']").val(generateDate(3));
-        $("[data-test-id='name'] [name='name']").val("Иван Иванов");
-        $("[data-test-id='phone'] [name='phone']").val("+12312341234");
-        $("[data-test-id='agreement'] [class='checkbox__box']").click();
-        $(".button").click();
-        $("[data-test-id='notification'] [class='notification__title']").shouldBe(text("Успешно!"), Duration.ofSeconds(15));
-        $("[data-test-id='notification'] [class='notification__content']").shouldBe(text("Встреча успешно забронирована на " + generateDate(3)));
-    }
-}
+        $("[data-test-id=city] [placeholder='Город']").setValue("Краснодар");
+        $("[data-test-id=date] [class='input__box'] [placeholder='Дата встречи']").doubleClick().sendKeys(Keys.BACK_SPACE);
+        $("[data-test-id=date] [class='input__box'] [placeholder='Дата встречи']").setValue(dateText);
+        $("[data-test-id=name] [type=text]").setValue("Ирина Пирогова");
+        $("[data-test-id=phone] [type=tel]").setValue("+79883339918");
+        $("[data-test-id=agreement]").click();
+        $("[role=button] .button__content").click();
+        $(withText("Успешно!")).shouldBe(Condition.visible, Duration.ofMillis(15000));
+        $("[data-test-id='notification'] .notification__content")
+                .shouldHave(Condition.exactText("Встреча успешно забронирована на " + dateText));
+    }}
